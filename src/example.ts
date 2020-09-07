@@ -1,14 +1,20 @@
-import gitsta from "@gitsta/libgitsta";
-import { Database, ChangeEvent } from ".";
+import Datastore = require("nedb");
+import { getServers } from "dns";
 
-// Nedb database
-var Datastore = require("nedb");
+const gitsta: any = {};
+// Must init git with a filesystem.
+gitsta.init();
 
+// NEDB database
+
+// Set up NEDB
 const db: any = {};
 db.todos = new Datastore();
 db.projects = new Datastore();
 
-function addTodo(title: string, desc: string) {
+// This gets called when a user adds a todo.
+// We simply add a new file to the file system.
+async function addTodo(title: string, desc: string) {
   // Get a hyphenated path from the title. "Get Milk" => "todos/get-milk.json"
   const filepath = "todos/" + title.replace(/ +/g, "-").toLowerCase() + ".json";
 
@@ -18,9 +24,17 @@ function addTodo(title: string, desc: string) {
     completed: false,
   });
 
-  gitsta.fs.write(filepath, todo);
+  const message = "Add a post";
+  await git.commit(message, files: [
+    {
+      type: "ADD",
+      filepath,
+      todo,
+    },
+  ]);
 }
 
+// When a change occurs in the filesystem, this event fires.
 gitsta.git.onChange(async (change: ChangeEvent) => {
   const [collection, filenameWithExtension] = change.path.split("/");
   const filename = filenameWithExtension.split(".")[0];
